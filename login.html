@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login | MineMechanics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#050507;
+  --bg2:#0b0c12;
+  --glass:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.14);
+  --muted:#a1a1aa;
+}
+body{
+  margin:0;
+  font-family:Manrope,system-ui;
+  background:
+    radial-gradient(900px 400px at top,#14141f,transparent),
+    linear-gradient(180deg,var(--bg2),var(--bg));
+  color:white;
+}
+.container{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.card{
+  width:100%;
+  max-width:420px;
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+  border:1px solid var(--border);
+  border-radius:28px;
+  padding:36px;
+}
+h1{
+  margin-bottom:6px;
+  font-size:2rem;
+}
+p{
+  color:var(--muted);
+  font-size:.95rem;
+  margin-bottom:26px;
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:.85rem;
+}
+input{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:white;
+  margin-bottom:18px;
+}
+input:focus{outline:none;border-color:white}
+button{
+  width:100%;
+  padding:15px;
+  border-radius:16px;
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+  background:white;
+  color:black;
+}
+.alt{
+  text-align:center;
+  margin-top:18px;
+  font-size:.9rem;
+}
+.alt a{color:white;text-decoration:underline}
+.brand{
+  position:absolute;
+  top:24px;
+  left:24px;
+  font-weight:800;
+}
+</style>
+</head>
+
+<body>
+<div class="brand">MineMechanics</div>
+
+<div class="container">
+  <div class="card">
+    <h1>Welcome back</h1>
+    <p>Login to your dashboard</p>
+
+    <form id="loginForm">
+      <label>Email</label>
+      <!-- Username LOOKS like username, but is email internally -->
+      <input id="loginEmail" type="text" placeholder="satoshi@gmail.com" required>
+
+      <label>Password</label>
+      <input id="loginPassword" type="password" placeholder="******" required>
+
+      <button type="submit">Login</button>
+    </form>
+
+    <div class="alt">
+      New here?
+      <a href="signup.html">Create an account</a>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ WORKING LOGIN SCRIPT -->
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const SUPABASE_URL = "https://qjwigtjmsiojtdkcvwwe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqd2lndGptc2lvanRka2N2d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0ODQ4NjIsImV4cCI6MjA4MDA2MDg2Mn0.1LqOL9A1GFJ3gQ27yqwoPM15rBbdT8aXUV-KEAsSHOQ";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const form = document.getElementById("loginForm");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  // ✅ Success
+  window.location.href = "dashboard.html";
+});
+</script>
+
+</body>
+</html>

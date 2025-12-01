@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Top Up | MineMechanics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#050507;
+  --bg2:#0b0c12;
+  --border:rgba(255,255,255,.14);
+  --glass:rgba(255,255,255,.06);
+  --soft:#a1a1aa;
+  --accent:#00f5a0;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Manrope,system-ui;
+  background:
+    radial-gradient(800px 400px at top,#14141f,transparent),
+    linear-gradient(180deg,var(--bg2),var(--bg));
+  color:white;
+}
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:240px;
+  padding:24px;
+  border-right:1px solid var(--border);
+}
+.brand{font-weight:800;font-size:1.3rem;margin-bottom:28px}
+.menu a{
+  display:block;
+  padding:12px 14px;
+  border-radius:12px;
+  text-decoration:none;
+  color:white;
+  opacity:.85;
+  margin-bottom:6px;
+}
+.menu a:hover{background:var(--glass);opacity:1}
+.main{flex:1;padding:28px}
+.card{
+  max-width:520px;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:28px;
+}
+.card h1{margin:0 0 8px 0}
+.card p{color:var(--soft);margin:0 0 22px 0}
+.field{margin-bottom:18px}
+.field label{
+  display:block;
+  font-size:.85rem;
+  margin-bottom:6px;
+  color:var(--soft);
+}
+.field input{
+  width:100%;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--glass);
+  color:white;
+  font-size:1rem;
+}
+.rate{
+  font-size:.9rem;
+  color:var(--soft);
+  margin-bottom:20px;
+}
+button{
+  width:100%;
+  padding:16px;
+  border-radius:18px;
+  border:none;
+  cursor:pointer;
+  font-weight:800;
+  font-size:1rem;
+  background:var(--accent);
+  color:black;
+}
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+.msg{
+  margin-top:14px;
+  font-size:.9rem;
+  color:var(--soft);
+}
+.error{color:#f78b8b}
+.success{color:#00f5a0}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">MineMechanics</div>
+    <nav class="menu">
+      <a href="dashboard.html">DASHBOARD</a>
+      <a href="deposit.html">TOP UP</a>
+      <a href="redeem.html">REDEEM</a>
+      <a href="#">TICKET</a>
+      <a href="#">FAQ</a>
+      <a href="#">TERMS</a>
+      <a href="#">POLICIES</a>
+      <a href="#">MINER</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="card">
+      <h1>Top Up Minem</h1>
+      <p>Deposit with crypto. Minem credited after confirmation.</p>
+
+      <div class="field">
+        <label>Minem Amount</label>
+        <input id="amount" type="number" min="1" step="1" placeholder="e.g. 10">
+      </div>
+
+      <div class="rate">1 MINEM = 1 USD</div>
+
+      <button id="payBtn">Continue to Payment</button>
+      <div class="msg" id="msg"></div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const SUPABASE_URL = "https://qjwigtjmsiojtdkcvwwe.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqd2lndGptc2lvanRka2N2d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0ODQ4NjIsImV4cCI6MjA4MDA2MDg2Mn0.1LqOL9A1GFJ3gQ27yqwoPM15rBbdT8aXUV-KEAsSHOQ";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const btn = document.getElementById("payBtn");
+const msg = document.getElementById("msg");
+
+function show(text, type="") {
+  msg.textContent = text;
+  msg.className = "msg " + type;
+}
+
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) {
+  window.location.href = "login.html";
+}
+
+btn.onclick = async () => {
+  const amt = Number(document.getElementById("amount").value);
+
+  if (!amt || amt < 1) {
+    show("Minimum top up is 1 MINEM", "error");
+    return;
+  }
+
+  btn.disabled = true;
+  show("Creating payment invoice...");
+
+  try {
+    const res = await fetch("/api/create-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: amt,
+        user_id: user.id
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.paymentUrl) {
+      throw new Error(data.error || "Payment creation failed");
+    }
+
+    show("Redirecting to payment gateway...", "success");
+    window.location.href = data.paymentUrl;
+
+  } catch (err) {
+    console.error(err);
+    show(err.message || "Something went wrong", "error");
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+:root{
+  --white:#ffffff;
+  --muted:#bfc3c6;
+  --accent-orange:#ff7a1a;
+  --accent-violet:#9b6cff;
+  --accent-green:#39ff8a;
+  --accent-pink:#ff66b3;
+  --accent-grey:#9aa0a6;
+  --accent-red:#ff4d4f;
+}
+
+/* Background gradient black */
+.gradient-bg{
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  min-height:100vh;
+  color:var(--white);
+  background:
+    radial-gradient(ellipse at 10% 10%, rgba(255,122,26,0.04) 0%, transparent 25%),
+    linear-gradient(180deg,#060606 0%, #0a0a0a 35%, #040405 100%);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* top bar */
+.topbar{
+  display:flex;
+  gap:20px;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter: blur(6px);
+}
+
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:44px;height:44px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent-violet),var(--accent-orange));
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;
+  font-size:16px;
+}
+.title{font-weight:700;font-size:18px;letter-spacing:0.4px}
+
+/* nav */
+.navlinks a{
+  color:var(--muted);
+  text-decoration:none;margin:0 6px;padding:6px 8px;border-radius:6px;font-weight:600;
+}
+.navlinks a:hover{color:var(--white);background:rgba(255,255,255,0.02)}
+
+/* container */
+.container{padding:28px;max-width:1100px;margin:0 auto}
+
+/* utility card */
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:14px;padding:18px;margin:14px 0;border:1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 18px rgba(2,2,2,0.6);
+}
+
+/* big hero */
+.hero{
+  display:flex;gap:18px;align-items:center;justify-content:space-between;
+  padding:28px;border-radius:14px;
+}
+.hero .left{flex:1}
+.hero h1{font-size:34px;letter-spacing:0.2px;margin:6px 0}
+.hero p{color:var(--muted);max-width:60%}
+
+/* colored pencil underline helper */
+.pencil-underline{
+  display:inline-block;
+  position:relative;
+  padding-bottom:6px;
+}
+.pencil-underline::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;height:10px;
+  background-image: url('data:image/svg+xml;utf8,\
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 20">\
+      <path d="M0 10 C40 0, 80 20, 200 10" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>\
+    </svg>');
+  background-repeat:no-repeat;
+  background-size:100% 100%;
+  opacity:0.95;
+  transform:translateY(6px);
+  pointer-events:none;
+}
+
+/* color variants for underline using CSS currentColor trick */
+.underline-orange{color:var(--accent-orange)}
+.underline-violet{color:var(--accent-violet)}
+.underline-green{color:var(--accent-green)}
+.underline-pink{color:var(--accent-pink)}
+.underline-grey{color:var(--accent-grey)}
+.underline-red{color:var(--accent-red)}
+
+/* miner cards */
+.miners-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.miner{
+  padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
+  display:flex;flex-direction:column;gap:10px;
+}
+.miner .meta{display:flex;justify-content:space-between;font-weight:600;color:var(--muted)}
+.btn{
+  padding:10px 12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);
+  color:var(--white);cursor:pointer;font-weight:700;
+}
+.btn-primary{background:linear-gradient(90deg,var(--accent-orange),var(--accent-violet));border:none;color:#000}
+.small{font-size:13px;padding:8px 10px}
+
+/* forms */
+.form-row{display:flex;flex-direction:column;gap:8px}
+.input,select,textarea{
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.035);
+  padding:10px;border-radius:10px;color:var(--white);font-size:15px;
+}
+
+/* footer */
+.footer{padding:18px;text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
+
+/* responsiveness */
+@media (max-width:720px){
+  .hero p{max-width:100%}
+  .navlinks{display:none}
+}
+
+/* small helpers */
+.row{display:flex;gap:12px;align-items:center}
+.right{margin-left:auto}
+.note{color:var(--muted);font-size:13px}
+.kv{font-weight:700}

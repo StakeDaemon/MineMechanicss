@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sign up | MineMechanics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#050507;
+  --bg2:#0b0c12;
+  --border:rgba(255,255,255,.14);
+  --muted:#a1a1aa;
+}
+body{
+  margin:0;
+  font-family:Manrope,system-ui;
+  background:
+    radial-gradient(900px 400px at top,#14141f,transparent),
+    linear-gradient(180deg,var(--bg2),var(--bg));
+  color:white;
+}
+.container{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.card{
+  width:100%;
+  max-width:420px;
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+  border:1px solid var(--border);
+  border-radius:28px;
+  padding:36px;
+}
+h1{margin-bottom:6px;font-size:2rem}
+p{color:var(--muted);font-size:.95rem;margin-bottom:26px}
+label{display:block;margin-bottom:6px;font-size:.85rem}
+input{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:white;
+  margin-bottom:18px;
+}
+button{
+  width:100%;
+  padding:15px;
+  border-radius:16px;
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+  background:white;
+  color:black;
+}
+.alt{text-align:center;margin-top:18px;font-size:.9rem}
+.alt a{color:white;text-decoration:underline}
+.brand{position:absolute;top:24px;left:24px;font-weight:800}
+.msg{margin-top:12px;font-size:.9rem}
+</style>
+</head>
+
+<body>
+<div class="brand">MineMechanics</div>
+
+<div class="container">
+  <div class="card">
+    <h1>Create account</h1>
+    <p>Start your virtual mining simulation</p>
+
+    <!-- ✅ ID ADDED -->
+    <form id="signupForm">
+      <label>Username</label>
+      <input id="signupUsername" type="text" required>
+
+      <label>Email</label>
+      <input id="signupEmail" type="email" required>
+
+      <label>Password</label>
+      <input id="signupPassword" type="password" required>
+
+      <button type="submit">Sign up</button>
+    </form>
+
+    <p id="signupMsg" class="msg"></p>
+
+    <div class="alt">
+      Already have an account?
+      <a href="login.html">Login</a>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ SUPABASE SCRIPT -->
+<script type="module">
+  import { signUp } from "./auth.js";
+  
+  const form = document.getElementById("signupForm");
+  const msg = document.getElementById("signupMsg");
+  
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    msg.textContent = "Creating account...";
+    msg.style.color = "#a1a1aa";
+    
+    const username = signupUsername.value.trim();
+    const email = signupEmail.value.trim();
+    const password = signupPassword.value;
+    
+    const { error } = await signUp(email, password, username);
+    
+    if (error) {
+      msg.textContent = error.message;
+      msg.style.color = "#ff7a7a";
+      return;
+    }
+    
+    msg.textContent = "Account created successfully!";
+    msg.style.color = "#00f5a0";
+    
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1000);
+  });
+</script>
+</body>
+</html>

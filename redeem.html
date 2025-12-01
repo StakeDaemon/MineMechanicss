@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Redeem | MineMechanics</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050507; --bg2:#0b0c12; --border:rgba(255,255,255,.14);
+  --glass:rgba(255,255,255,.06); --soft:#a1a1aa; --accent:#00f5a0;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Manrope,system-ui;background:
+  radial-gradient(800px 400px at top,#14141f,transparent),
+  linear-gradient(180deg,var(--bg2),var(--bg));color:#fff}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;padding:24px;border-right:1px solid var(--border)}
+.brand{font-weight:800;font-size:1.3rem;margin-bottom:28px}
+.menu a{display:block;padding:12px 14px;border-radius:12px;text-decoration:none;color:white;opacity:.85;margin-bottom:6px}
+.menu a:hover{background:var(--glass);opacity:1}
+.main{flex:1;padding:28px}
+.header h1{margin:0;font-size:1.5rem}
+.header p{color:var(--soft);margin-top:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin:26px 0}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid var(--border);border-radius:22px;padding:22px}
+.card h3{margin:0 0 10px 0;font-size:1rem;color:var(--soft)}
+.value{font-size:2rem;font-weight:800}
+.topup{display:inline-block;margin-top:14px;background:white;color:black;padding:10px 14px;border-radius:14px;text-decoration:none;font-weight:700}
+.redeem-section{margin-top:34px}
+.redeem-section label{display:block;margin-top:12px;color:var(--soft)}
+.redeem-section input, .redeem-section select{width:100%;padding:12px;margin-top:6px;border-radius:12px;border:none;font-size:1rem;background:rgba(255,255,255,.05);color:white}
+.redeem-section button{margin-top:14px;padding:14px 20px;border:none;border-radius:14px;font-weight:800;background:var(--accent);color:black;cursor:pointer;width:100%}
+.msg{margin-top:12px;color:var(--soft)}
+.small{font-size:.9rem;color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">MineMechanics</div>
+    <nav class="menu">
+      <a href="deposit.html">TOP UP</a>
+      <a href="#">REDEEM</a>
+      <a href="#">TICKET</a>
+      <a href="#">FAQ</a>
+      <a href="#">TERMS</a>
+      <a href="#">POLICIES</a>
+      <a href="#">MINER</a>
+      <a href="#">GIFT</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1 id="hello">Hello</h1>
+      <p id="email" class="small"></p>
+    </div>
+
+    <section class="cards">
+      <div class="card">
+        <h3>M² Balance</h3>
+        <div class="value" id="m2">0</div>
+      </div>
+      <div class="card">
+        <h3>MINEM Balance</h3>
+        <div class="value" id="minem">0</div>
+        <a class="topup" href="deposit.html">Top up*</a>
+      </div>
+      <div class="card">
+        <h3>Miners Owned</h3>
+        <div class="value" id="miners">0</div>
+      </div>
+    </section>
+
+    <section class="redeem-section">
+      <h2>Redeem M²</h2>
+
+      <label>Amount to Redeem ($)</label>
+      <input type="number" id="redeemAmount" placeholder="Enter amount in M²">
+
+      <label>Redeem Method</label>
+      <select id="redeemMethod">
+        <option value="faucetpay">FaucetPay</option>
+        <option value="direct">Direct Wallet</option>
+        <option value="tonkeeper">Tonkeeper</option>
+        <option value="btcEmail">Bitcoin by Email</option>
+        <option value="giftcard">Gift Card</option>
+      </select>
+
+      <div id="methodInputs"></div>
+
+      <button id="redeemBtn">Submit Redeem</button>
+      <div class="msg" id="redeemMsg"></div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(
+  "https://qjwigtjmsiojtdkcvwwe.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqd2lndGptc2lvanRka2N2d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0ODQ4NjIsImV4cCI6MjA4MDA2MDg2Mn0.1LqOL9A1GFJ3gQ27yqwoPM15rBbdT8aXUV-KEAsSHOQ"
+);
+
+const redeemAmountInput = document.getElementById("redeemAmount");
+const redeemMethodSelect = document.getElementById("redeemMethod");
+const methodInputsDiv = document.getElementById("methodInputs");
+const redeemBtn = document.getElementById("redeemBtn");
+const redeemMsg = document.getElementById("redeemMsg");
+
+const m2El = document.getElementById("m2");
+const minemEl = document.getElementById("minem");
+const minersEl = document.getElementById("miners");
+
+const giftCardLimits = {
+  "DoorDash": {min:15, max:150},
+  "Instacart": {min:25, max:250},
+  "Uber": {min:15, max:300},
+  "Uber Eats": {min:15, max:200},
+  "Adidas": {min:5, max:300},
+  "Steam": {min:5, max:100},
+  "Airbnb": {min:25, max:60},
+  "Google Play": {min:5, max:200},
+  "Groupon": {min:10, max:200},
+  "Starbucks": {min:5, max:100},
+  "ROBLOX": {min:10, max:100},
+  "IKEA": {min:25, max:1000}
+};
+
+function showMsg(msg, good=false){ redeemMsg.textContent=msg; redeemMsg.style.color=good?"#00f5a0":"#f78b8b"; }
+
+function renderMethodInputs(){
+  const method = redeemMethodSelect.value;
+  let html = "";
+  if(method==="faucetpay"){
+    html=`<label>Email</label><input type="email" id="inputEmail" required>
+          <label>Coin</label><select id="inputCoin">
+          <option>BTC</option><option>ETH</option><option>DOGE</option><option>POL</option><option>XMR</option><option>XLM</option><option>ADA</option><option>TRX</option><option>BNB</option><option>SOL</option><option>XRP</option><option>PEPE</option></select>
+          <div class="small">Min: 0.02 M²</div>`;
+  } else if(method==="direct"){
+    html=`<label>Wallet Address</label><input type="text" id="inputWallet" required>
+          <label>Coin</label><select id="inputCoin">
+          <option>BTC</option><option>ETH</option><option>DOGE</option><option>TRX</option><option>USDT(BEP)</option><option>USDT(TRC)</option><option>USDT(ETH)</option><option>USDT(SOL)</option><option>XLM</option><option>ADA</option><option>DOT</option><option>ZEC</option><option>FLOKI</option><option>SHIBA</option><option>PEPE</option><option>SOL</option><option>BNB</option></select>
+          <div class="small">Min: 5 M²</div>`;
+  } else if(method==="tonkeeper"){
+    html=`<label>Wallet Address</label><input type="text" id="inputWallet" required>
+          <div class="small">Min: 2 M²</div>`;
+  } else if(method==="btcEmail"){
+    html=`<label>ProtonMail Email</label><input type="email" id="inputEmail" required>
+          <div class="small">Min: 15 M²</div>`;
+  } else if(method==="giftcard"){
+    html=`<label>Email</label><input type="email" id="inputEmail" required>
+          <label>Gift Card</label><select id="inputGift">`;
+    for(const gc in giftCardLimits) html+=`<option>${gc}</option>`;
+    html+=`</select>
+          <div class="small" id="giftMinMax"></div>`;
+  }
+  methodInputsDiv.innerHTML = html;
+  if(method==="giftcard") updateGiftMinMax();
+  document.getElementById("inputGift")?.addEventListener("change", updateGiftMinMax);
+}
+
+function updateGiftMinMax(){
+  const gift = document.getElementById("inputGift")?.value;
+  if(gift && giftCardLimits[gift]){
+    document.getElementById("giftMinMax").textContent = `Min: ${giftCardLimits[gift].min} M² | Max: ${giftCardLimits[gift].max} M²`;
+  }
+}
+
+redeemMethodSelect.addEventListener("change", renderMethodInputs);
+
+async function loadBalances(){
+  const { data:{ user } } = await supabase.auth.getUser();
+  if(!user) return window.location.href="login.html";
+
+  const { data: profile } = await supabase.from("profiles").select("username,email").eq("id",user.id).single();
+  document.getElementById("hello").textContent=`Hello ${profile.username}!`;
+  document.getElementById("email").textContent=profile.email;
+
+  const { data: bal } = await supabase.from("balances").select("m2,minem").eq("user_id",user.id).single();
+  m2El.textContent=bal?.m2||0;
+  minemEl.textContent=bal?.minem||0;
+
+  const { count } = await supabase.from("miners").select("*",{count:"exact",head:true}).eq("user_id",user.id);
+  minersEl.textContent=count||0;
+}
+
+async function handleRedeem(){
+  redeemBtn.disabled=true;
+  showMsg("Processing...",true);
+  const amt=parseFloat(redeemAmountInput.value);
+  const method=redeemMethodSelect.value;
+  const { data:{ user } } = await supabase.auth.getUser();
+  if(!user){showMsg("Login required"); redeemBtn.disabled=false; return;}
+  
+  const { data: bal } = await supabase.from("balances").select("m2").eq("user_id",user.id).single();
+  if(!bal || amt>bal.m2){showMsg("Insufficient M² balance"); redeemBtn.disabled=false; return;}
+
+  let minAmt=0, maxAmt=Infinity, fee=0;
+
+  if(method==="faucetpay") minAmt=0.02;
+  else if(method==="direct") minAmt=5;
+  else if(method==="tonkeeper") minAmt=2;
+  else if(method==="btcEmail") minAmt=15;
+  else if(method==="giftcard"){
+    const gift = document.getElementById("inputGift")?.value;
+    if(!gift || !giftCardLimits[gift]){showMsg("Select gift card"); redeemBtn.disabled=false; return;}
+    minAmt=giftCardLimits[gift].min;
+    maxAmt=giftCardLimits[gift].max;
+  }
+
+  if(amt<minAmt){showMsg(`Amount too low. Min: ${minAmt} M²`); redeemBtn.disabled=false; return;}
+  if(amt>maxAmt){showMsg(`Amount too high. Max: ${maxAmt} M²`); redeemBtn.disabled=false; return;}
+
+  const emailInput=document.getElementById("inputEmail");
+  if(emailInput && !emailInput.value.trim()){showMsg("Email is required!"); redeemBtn.disabled=false; return;}
+
+  if(method==="direct") fee=0.01 + amt*0.006;
+  else if(method==="tonkeeper") fee=0.03;
+  else if(method==="btcEmail") fee=0.05 + amt*0.001;
+  else if(method==="giftcard"){
+    const gift = document.getElementById("inputGift").value;
+    fee=gift==="Steam"?0.05*amt:0.05;
+  }
+
+  await supabase.from("balances").update({m2:bal.m2-amt}).eq("user_id",user.id);
+
+  let payload={user_id:user.id,method,amount:amt,fee,status:"pending"};
+  if(["faucetpay","direct","tonkeeper","btcEmail"].includes(method)){
+    payload.destination=document.getElementById("inputWallet")?.value||emailInput.value;
+    payload.coin=document.getElementById("inputCoin")?.value||method.toUpperCase();
+  } else if(method==="giftcard"){
+    payload.destination=emailInput.value;
+    payload.coin=document.getElementById("inputGift").value;
+  }
+
+  const { data: withdrawal } = await supabase.from("withdrawals").insert(payload).select().single();
+
+  if(method==="giftcard"){
+    await supabase.from("gift_cards").insert({
+      withdrawal_id: withdrawal.id,
+      brand: payload.coin,
+      value_usd: amt,
+      recipient_email: payload.destination
+    });
+  }
+
+  showMsg(`Redeem request submitted! Fee: ${fee.toFixed(2)} M²`,true);
+  await loadBalances();
+  redeemBtn.disabled=false;
+}
+
+redeemBtn.addEventListener("click", handleRedeem);
+renderMethodInputs();
+loadBalances();
+</script>
+</body>
+</html>

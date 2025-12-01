@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Dashboard | MineMechanics</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050507; --bg2:#0b0c12; --border:rgba(255,255,255,.14);
+  --glass:rgba(255,255,255,.06); --soft:#a1a1aa; --accent:#00f5a0;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Manrope,system-ui;background:
+  radial-gradient(800px 400px at top,#14141f,transparent),
+  linear-gradient(180deg,var(--bg2),var(--bg));color:#fff}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;padding:24px;border-right:1px solid var(--border)}
+.brand{font-weight:800;font-size:1.3rem;margin-bottom:28px}
+.menu a{display:block;padding:12px 14px;border-radius:12px;text-decoration:none;color:white;opacity:.85;margin-bottom:6px}
+.menu a:hover{background:var(--glass);opacity:1}
+.main{flex:1;padding:28px}
+.header h1{margin:0;font-size:1.5rem}
+.header p{color:var(--soft);margin-top:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin:26px 0}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid var(--border);border-radius:22px;padding:22px}
+.card h3{margin:0 0 10px 0;font-size:1rem;color:var(--soft)}
+.value{font-size:2rem;font-weight:800}
+.topup{display:inline-block;margin-top:14px;background:white;color:black;padding:10px 14px;border-radius:14px;text-decoration:none;font-weight:700}
+.loot{margin-top:34px}
+.loot button{padding:14px 20px;border-radius:14px;border:none;cursor:pointer;font-weight:800}
+.collect{background:var(--accent);color:black}
+.transfer{background:white;color:black;margin-left:10px}
+.msg{margin-top:12px;color:var(--soft)}
+.small{font-size:.9rem;color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">MineMechanics</div>
+    <nav class="menu">
+      <a href="dashboard.html">DASHBOARD</a>
+      <a href="deposit.html">TOP UP</a>
+      <a href="#">REDEEM</a>
+      <a href="#">TICKET</a>
+      <a href="#">FAQ</a>
+      <a href="#">TERMS</a>
+      <a href="#">POLICIES</a>
+      <a href="#">MINER</a>
+      <a href="#">GIFT</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1 id="hello">Hello</h1>
+      <p id="email" class="small"></p>
+    </div>
+
+    <section class="cards">
+      <div class="card">
+        <h3>M² Balance</h3>
+        <div class="value" id="m2">0</div>
+      </div>
+
+      <div class="card">
+        <h3>MINEM Balance</h3>
+        <div class="value" id="minem">0</div>
+        <a class="topup" href="deposit.html">Top up*</a>
+      </div>
+
+      <div class="card">
+        <h3>Miners Owned</h3>
+        <div class="value" id="miners">0</div>
+      </div>
+    </section>
+
+    <section class="loot">
+      <h2>Loot Faucet</h2>
+      <div style="margin-top:12px;">
+        <button class="collect" id="lootBtn">Collect Loot</button>
+        <button class="transfer" id="transferBtn">Transfer → Wallet</button>
+      </div>
+
+      <div class="msg" id="lootMsg"></div>
+      <div style="margin-top:8px" class="small">Temp m²: <span id="tempM2">0</span></div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const SUPABASE_URL = "https://qjwigtjmsiojtdkcvwwe.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqd2lndGptc2lvanRka2N2d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0ODQ4NjIsImV4cCI6MjA4MDA2MDg2Mn0.1LqOL9A1GFJ3gQ27yqwoPM15rBbdT8aXUV-KEAsSHOQ";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const LOOT_M2 = 0.00000001; // tiny increment
+const COOLDOWN_SECONDS = 0;
+
+const helloEl = document.getElementById("hello");
+const emailEl = document.getElementById("email");
+const m2El = document.getElementById("m2");
+const minemEl = document.getElementById("minem");
+const minersEl = document.getElementById("miners");
+const tempM2El = document.getElementById("tempM2");
+const lootMsgEl = document.getElementById("lootMsg");
+const lootBtn = document.getElementById("lootBtn");
+const transferBtn = document.getElementById("transferBtn");
+
+function showMsg(text, isGood = false) {
+  lootMsgEl.textContent = text;
+  lootMsgEl.style.color = isGood ? "#00f5a0" : "#f78b8b";
+}
+
+function truncateDisplay(num, decimals = 8) {
+  return Math.floor(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
+async function init() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return window.location.href = "login.html";
+
+    window._MM_USER = user;
+    await loadProfileAndBalances();
+    attachHandlers();
+  } catch (err) {
+    console.error("init err", err);
+    showMsg("Unexpected error. Check console.");
+  }
+}
+
+async function loadProfileAndBalances() {
+  try {
+    const userId = window._MM_USER.id;
+
+    // profile
+    const { data: profile, error: profErr } = await supabase
+      .from("profiles")
+      .select("username,email")
+      .eq("id", userId)
+      .single();
+    if (profErr) throw profErr;
+    helloEl.textContent = `Hello ${profile.username}!`;
+    emailEl.textContent = profile.email || "";
+
+    // balances
+    let { data: bal, error: balErr } = await supabase
+      .from("balances")
+      .select("m2,minem")
+      .eq("user_id", userId)
+      .single();
+
+    if (balErr && balErr.code === "PGRST116") {
+      const { error: insertErr } = await supabase
+        .from("balances")
+        .insert({ user_id: userId, minem: 0, m2: 0 });
+      if (insertErr) throw insertErr;
+      bal = { minem: 0, m2: 0 };
+    } else if (balErr) {
+      throw balErr;
+    }
+
+    m2El.textContent = truncateDisplay(Number(bal?.m2 ?? 0));
+    minemEl.textContent = truncateDisplay(Number(bal?.minem ?? 0));
+
+    // miners count
+    const { count, error: minerErr } = await supabase
+      .from("miners")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (minerErr) throw minerErr;
+    minersEl.textContent = count ?? 0;
+
+    // temp loot
+    const { data: tempRow, error: tempErr } = await supabase
+      .from("loot_temp")
+      .select("temp_m2, last_click_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (tempErr) throw tempErr;
+    tempM2El.textContent = truncateDisplay(Number(tempRow?.temp_m2 ?? 0));
+  } catch (err) {
+    console.error("load error", err);
+    showMsg("Failed to load dashboard data");
+  }
+}
+
+function attachHandlers() {
+  lootBtn.addEventListener("click", onCollectLoot);
+  transferBtn.addEventListener("click", onTransferLoot);
+}
+
+async function onCollectLoot() {
+  try {
+    lootBtn.disabled = true;
+    showMsg("Collecting...", false);
+
+    const userId = window._MM_USER.id;
+
+    const { data: existing, error: readErr } = await supabase
+      .from("loot_temp")
+      .select("temp_m2,last_click_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (readErr) throw readErr;
+
+    const now = new Date();
+
+    if (existing?.last_click_at) {
+      const last = new Date(existing.last_click_at);
+      const delta = (now - last) / 1000;
+      if (delta < COOLDOWN_SECONDS) {
+        const wait = Math.ceil(COOLDOWN_SECONDS - delta);
+        showMsg(`Please wait ${wait}s`);
+        lootBtn.disabled = false;
+        return;
+      }
+    }
+
+    const newTemp = (Number(existing?.temp_m2 ?? 0) + LOOT_M2);
+
+    if (existing) {
+      const { error: upErr } = await supabase
+        .from("loot_temp")
+        .update({ temp_m2: newTemp, last_click_at: now.toISOString() })
+        .eq("user_id", userId);
+      if (upErr) throw upErr;
+    } else {
+      const { error: insErr } = await supabase
+        .from("loot_temp")
+        .insert({ user_id: userId, temp_m2: newTemp, last_click_at: now.toISOString() });
+      if (insErr) throw insErr;
+    }
+
+    tempM2El.textContent = truncateDisplay(newTemp);
+    showMsg(`+${LOOT_M2} m² added`, true);
+    lootBtn.disabled = false;
+  } catch (err) {
+    console.error("collect err", err);
+    showMsg("Failed to collect loot");
+    lootBtn.disabled = false;
+  }
+}
+
+async function onTransferLoot() {
+  try {
+    transferBtn.disabled = true;
+    showMsg("Transferring...", false);
+
+    const userId = window._MM_USER.id;
+
+    const { data: tempRow, error: tempErr } = await supabase
+      .from("loot_temp")
+      .select("temp_m2")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (tempErr) throw tempErr;
+
+    const amt = Number(tempRow?.temp_m2 ?? 0);
+    if (!amt || amt <= 0) {
+      showMsg("No loot to transfer");
+      transferBtn.disabled = false;
+      return;
+    }
+
+    const { data: balRow, error: balErr } = await supabase
+      .from("balances")
+      .select("m2")
+      .eq("user_id", userId)
+      .single();
+    if (balErr) throw balErr;
+
+    const newM2 = Number(balRow?.m2 ?? 0) + amt;
+
+    const { error: updateErr } = await supabase
+      .from("balances")
+      .update({ m2: newM2, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
+    if (updateErr) throw updateErr;
+
+    const { error: logErr } = await supabase
+      .from("loot_transfers")
+      .insert({ user_id: userId, amount: amt });
+    if (logErr) console.warn("loot_transfers log failed:", logErr.message);
+
+    const { error: resetErr } = await supabase
+      .from("loot_temp")
+      .update({ temp_m2: 0 })
+      .eq("user_id", userId);
+    if (resetErr) throw resetErr;
+
+    await loadProfileAndBalances();
+    showMsg(`Transferred ${truncateDisplay(amt)} m²`, true);
+  } catch (err) {
+    console.error("transfer err", err);
+    showMsg("Transfer failed — try again");
+  } finally {
+    transferBtn.disabled = false;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
